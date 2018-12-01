@@ -2,22 +2,28 @@ package br.com.mt.security.jwt;
 
 import java.nio.charset.StandardCharsets;
 import java.security.Key;
-import java.util.*;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.Date;
 import java.util.stream.Collectors;
 import javax.annotation.PostConstruct;
-
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
-import org.springframework.security.core.userdetails.User;
 import org.springframework.stereotype.Component;
 import org.springframework.util.StringUtils;
-
+import br.com.mt.domain.TenantEntity;
+import br.com.mt.tenant.TenantUserDetails;
 import io.github.jhipster.config.JHipsterProperties;
-import io.jsonwebtoken.*;
+import io.jsonwebtoken.Claims;
+import io.jsonwebtoken.ExpiredJwtException;
+import io.jsonwebtoken.Jwts;
+import io.jsonwebtoken.MalformedJwtException;
+import io.jsonwebtoken.SignatureAlgorithm;
+import io.jsonwebtoken.UnsupportedJwtException;
 import io.jsonwebtoken.io.Decoders;
 import io.jsonwebtoken.security.Keys;
 
@@ -27,6 +33,8 @@ public class TokenProvider {
     private final Logger log = LoggerFactory.getLogger(TokenProvider.class);
 
     private static final String AUTHORITIES_KEY = "auth";
+    
+    private static final String TENANT_ID = TenantEntity.TENANT_ID_PROPERTY_NAME;
 
     private Key key;
 
@@ -72,10 +80,17 @@ public class TokenProvider {
         } else {
             validity = new Date(now + this.tokenValidityInMilliseconds);
         }
-
+        
+        Object principal = authentication.getPrincipal();
+        String tenantId = null;
+        if (principal instanceof TenantUserDetails) {
+            tenantId = ((TenantUserDetails) principal).getTenantId().toString();
+        }
+        
         return Jwts.builder()
             .setSubject(authentication.getName())
             .claim(AUTHORITIES_KEY, authorities)
+            .claim(TENANT_ID, tenantId)
             .signWith(key, SignatureAlgorithm.HS512)
             .setExpiration(validity)
             .compact();
@@ -92,7 +107,8 @@ public class TokenProvider {
                 .map(SimpleGrantedAuthority::new)
                 .collect(Collectors.toList());
 
-        User principal = new User(claims.getSubject(), "", authorities);
+        Long tenantId = claims.get(TENANT_ID) != null ? Long.parseLong((String) claims.get(TENANT_ID)) : null;
+        TenantUserDetails principal = new TenantUserDetails(claims.getSubject(), "", authorities, tenantId);
 
         return new UsernamePasswordAuthenticationToken(principal, token, authorities);
     }

@@ -1,10 +1,11 @@
 package br.com.mt.security;
 
+import java.util.Optional;
+import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContext;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.UserDetails;
-
-import java.util.Optional;
+import br.com.mt.tenant.TenantUserDetails;
 
 /**
  * Utility class for Spring Security.
@@ -32,6 +33,33 @@ public final class SecurityUtils {
                 return null;
             });
     }
+    
+    public static UserDetails getCurrentUserDetail()
+    {
+        SecurityContext securityContext = SecurityContextHolder.getContext();
+        Authentication authentication = securityContext.getAuthentication();
+        if (authentication != null)
+        {
+            if (authentication.getPrincipal() instanceof UserDetails)
+            {
+                UserDetails springSecurityUser = (UserDetails) authentication.getPrincipal();
+                return springSecurityUser;
+            }
+        }
+        return null;
+    }
+    
+    public static Long getTenantIdentifier()
+    {
+        UserDetails currentUserDetail = SecurityUtils.getCurrentUserDetail();
+        if (currentUserDetail != null && currentUserDetail instanceof TenantUserDetails)
+        {
+            Long tenantId = ((TenantUserDetails) currentUserDetail).getTenantId();
+            return tenantId;
+        }
+        return null;
+    }
+    
 
     /**
      * Get the JWT of the current user.
