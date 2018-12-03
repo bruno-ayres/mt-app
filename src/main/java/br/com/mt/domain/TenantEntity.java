@@ -11,7 +11,7 @@ import org.hibernate.annotations.ParamDef;
 @Inheritance(strategy = InheritanceType.TABLE_PER_CLASS)
 @FilterDef(name = "tenantFilter", parameters = @ParamDef(name = "tenantId", type = "long"), defaultCondition = "tenant_Id" + "= :" + "tenantId")
 @Filter(name = "tenantFilter")
-public class TenantEntity
+public class TenantEntity extends AbstractAuditingEntity
 {
     public static final String TENANT_FILTER_NAME = "tenantFilter";
 

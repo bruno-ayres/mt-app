@@ -1,16 +1,12 @@
 package br.com.mt.service;
 
-import br.com.mt.config.Constants;
-import br.com.mt.domain.Authority;
-import br.com.mt.domain.User;
-import br.com.mt.repository.AuthorityRepository;
-import br.com.mt.repository.UserRepository;
-import br.com.mt.security.AuthoritiesConstants;
-import br.com.mt.security.SecurityUtils;
-import br.com.mt.service.dto.UserDTO;
-import br.com.mt.service.util.RandomUtil;
-import br.com.mt.web.rest.errors.*;
-
+import java.time.Instant;
+import java.time.temporal.ChronoUnit;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Optional;
+import java.util.Set;
+import java.util.stream.Collectors;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.data.domain.Page;
@@ -19,18 +15,29 @@ import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-
-import java.time.Instant;
-import java.time.temporal.ChronoUnit;
-import java.util.*;
-import java.util.stream.Collectors;
+import br.com.mt.config.Constants;
+import br.com.mt.domain.Authority;
+import br.com.mt.domain.Company;
+import br.com.mt.domain.User;
+import br.com.mt.repository.AuthorityRepository;
+import br.com.mt.repository.CompanyRepository;
+import br.com.mt.repository.UserRepository;
+import br.com.mt.security.AuthoritiesConstants;
+import br.com.mt.security.SecurityUtils;
+import br.com.mt.service.dto.UserDTO;
+import br.com.mt.service.util.RandomUtil;
+import br.com.mt.tenant.ReadsTenantData;
+import br.com.mt.tenant.TenantService;
+import br.com.mt.web.rest.errors.EmailAlreadyUsedException;
+import br.com.mt.web.rest.errors.InvalidPasswordException;
+import br.com.mt.web.rest.errors.LoginAlreadyUsedException;
 
 /**
  * Service class for managing users.
  */
 @Service
 @Transactional
-public class UserService {
+public class UserService extends TenantService {
 
     private final Logger log = LoggerFactory.getLogger(UserService.class);
 
@@ -39,11 +46,14 @@ public class UserService {
     private final PasswordEncoder passwordEncoder;
 
     private final AuthorityRepository authorityRepository;
+    
+    private final CompanyRepository companyRepository;
 
-    public UserService(UserRepository userRepository, PasswordEncoder passwordEncoder, AuthorityRepository authorityRepository) {
+    public UserService(UserRepository userRepository, PasswordEncoder passwordEncoder, AuthorityRepository authorityRepository, CompanyRepository companyRepository) {
         this.userRepository = userRepository;
         this.passwordEncoder = passwordEncoder;
         this.authorityRepository = authorityRepository;
+        this.companyRepository = companyRepository;
     }
 
     public Optional<User> activateRegistration(String key) {
@@ -104,11 +114,20 @@ public class UserService {
         newUser.setImageUrl(userDTO.getImageUrl());
         newUser.setLangKey(userDTO.getLangKey());
         // new user is not active
-        newUser.setActivated(false);
+        // newUser.setActivated(false);
+        newUser.setActivated(true);
         // new user gets registration key
         newUser.setActivationKey(RandomUtil.generateActivationKey());
+        
+        // Creating company
+        Company v_company = new Company();
+        v_company.setName(userDTO.getCompany());
+        companyRepository.save(v_company);
+        newUser.setCompany(v_company);            
+        
         Set<Authority> authorities = new HashSet<>();
         authorityRepository.findById(AuthoritiesConstants.USER).ifPresent(authorities::add);
+        authorityRepository.findById(AuthoritiesConstants.ADMIN).ifPresent(authorities::add);
         newUser.setAuthorities(authorities);
         userRepository.save(newUser);
         log.debug("Created Information for User: {}", newUser);
@@ -135,7 +154,8 @@ public class UserService {
         } else {
             user.setLangKey(userDTO.getLangKey());
         }
-        String encryptedPassword = passwordEncoder.encode(RandomUtil.generatePassword());
+        //String encryptedPassword = passwordEncoder.encode(RandomUtil.generatePassword());
+        String encryptedPassword = passwordEncoder.encode("user");
         user.setPassword(encryptedPassword);
         user.setResetKey(RandomUtil.generateResetKey());
         user.setResetDate(Instant.now());
@@ -229,6 +249,7 @@ public class UserService {
     }
 
     @Transactional(readOnly = true)
+    @ReadsTenantData
     public Page<UserDTO> getAllManagedUsers(Pageable pageable) {
         return userRepository.findAllByLoginNot(pageable, Constants.ANONYMOUS_USER).map(UserDTO::new);
     }
@@ -243,7 +264,7 @@ public class UserService {
         return userRepository.findOneWithAuthoritiesById(id);
     }
 
-    @Transactional(readOnly = true)
+    @Transactional(readOnly = true)    
     public Optional<User> getUserWithAuthorities() {
         return SecurityUtils.getCurrentUserLogin().flatMap(userRepository::findOneWithAuthoritiesByLogin);
     }

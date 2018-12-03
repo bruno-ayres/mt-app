@@ -56,8 +56,9 @@ public class DomainUserDetailsService implements UserDetailsService {
         List<GrantedAuthority> grantedAuthorities = user.getAuthorities().stream()
             .map(authority -> new SimpleGrantedAuthority(authority.getName()))
             .collect(Collectors.toList());
+        Long v_tenantId = user.getCompany() != null ? user.getCompany().getId() : user.getTenantId();        
         return new TenantUserDetails(user.getLogin(),
             user.getPassword(),
-            grantedAuthorities, user.getId());
+            grantedAuthorities, v_tenantId);
     }
 }

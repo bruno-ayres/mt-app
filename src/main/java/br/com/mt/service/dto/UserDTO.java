@@ -50,6 +50,8 @@ public class UserDTO {
     private String lastModifiedBy;
 
     private Instant lastModifiedDate;
+    
+    private String company;
 
     private Set<String> authorities;
 
@@ -195,5 +197,15 @@ public class UserDTO {
             ", lastModifiedDate=" + lastModifiedDate +
             ", authorities=" + authorities +
             "}";
+    }
+
+    public String getCompany()
+    {
+        return company;
+    }
+
+    public void setCompany(String p_company)
+    {
+        company = p_company;
     }
 }

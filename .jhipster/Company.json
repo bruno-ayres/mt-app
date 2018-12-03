@@ -1,0 +1,21 @@
+{
+    "fluentMethods": true,
+    "clientRootFolder": "",
+    "relationships": [],
+    "fields": [
+        {
+            "fieldName": "name",
+            "fieldType": "String",
+            "fieldValidateRules": [
+                "required"
+            ]
+        }
+    ],
+    "changelogDate": "20181203112759",
+    "dto": "mapstruct",
+    "searchEngine": false,
+    "service": "serviceClass",
+    "entityTableName": "company",
+    "jpaMetamodelFiltering": false,
+    "pagination": "pagination"
+}

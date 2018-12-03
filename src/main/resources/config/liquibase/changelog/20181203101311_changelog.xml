@@ -1,0 +1,48 @@
+<?xml version="1.1" encoding="UTF-8" standalone="no"?>
+<databaseChangeLog xmlns="http://www.liquibase.org/xml/ns/dbchangelog" xmlns:ext="http://www.liquibase.org/xml/ns/dbchangelog-ext" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog-ext http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-ext.xsd http://www.liquibase.org/xml/ns/dbchangelog http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-3.5.xsd">
+    <changeSet author="brucalai (generated)" id="1543839196897-1">
+        <createTable tableName="company">
+            <column autoIncrement="true" name="id" type="BIGINT">
+                <constraints primaryKey="true" primaryKeyName="companyPK"/>
+            </column>
+            <column name="name" type="VARCHAR(255)">
+                <constraints nullable="false"/>
+            </column>
+        </createTable>
+    </changeSet>
+    <changeSet author="brucalai (generated)" id="1543839196897-2">
+        <addColumn tableName="jhi_user">
+            <column name="company_id" type="int8"/>
+        </addColumn>
+    </changeSet>
+    <changeSet author="brucalai (generated)" id="1543839196897-3">
+        <addColumn tableName="car">
+            <column name="created_by" type="varchar(50)">
+                <constraints nullable="false"/>
+            </column>
+        </addColumn>
+    </changeSet>
+    <changeSet author="brucalai (generated)" id="1543839196897-4">
+        <addColumn tableName="car">
+            <column name="created_date" type="timestamp"/>
+        </addColumn>
+    </changeSet>
+    <changeSet author="brucalai (generated)" id="1543839196897-5">
+        <addColumn tableName="car">
+            <column name="last_modified_by" type="varchar(50)"/>
+        </addColumn>
+    </changeSet>
+    <changeSet author="brucalai (generated)" id="1543839196897-6">
+        <addColumn tableName="car">
+            <column name="last_modified_date" type="timestamp"/>
+        </addColumn>
+    </changeSet>
+    <changeSet author="brucalai (generated)" id="1543839196897-7">
+        <addColumn tableName="jhi_user">
+            <column name="tenant_id" type="int8"/>
+        </addColumn>
+    </changeSet>
+    <changeSet author="brucalai (generated)" id="1543839196897-8">
+        <addForeignKeyConstraint baseColumnNames="company_id" baseTableName="jhi_user" constraintName="FK3ltrtkr6yv25sivkurwf9q8v9" deferrable="false" initiallyDeferred="false" referencedColumnNames="id" referencedTableName="company"/>
+    </changeSet>
+</databaseChangeLog>
